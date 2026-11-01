@@ -37,7 +37,7 @@ private:
         capacity = newCapacity;
     }
 
-    bool equal(const T& first, const T& second)
+    bool equal(const T& first, const T& second) const
     {
         double eps = 1e-6;
         if constexpr (std::is_floating_point_v<T>)
@@ -182,7 +182,8 @@ public:
 
     bool contains(const T& value) const
     {
-        if (size == 0) {
+        if (size == 0)
+        {
             return false;
         }
 
