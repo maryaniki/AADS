@@ -8,6 +8,21 @@ private:
     size_t size;
     size_t capacity;
 
+    void add(const T& value)
+    {
+        if (contains(value))
+        {
+            return;
+        }
+        if (size == capacity)
+        {
+            size_t newCapacity = (capacity == 0) ? 2 : capacity * 2;
+            resize(newCapacity);
+        }
+        data[size] = value;
+        ++size;
+    }
+
     void resize(size_t newCapacity) 
     {
         T* newData = new T[newCapacity];
@@ -41,16 +56,17 @@ private:
 public:
     Set() : data(nullptr), size(0), capacity(0) {}
 
-    Set(const T* arr, size_t count) 
+    template <size_t N>
+    Set(const T(&arr)[N])
     {
-        if (count == 0) 
+        if (N == 0) 
         {
             return;
         }
-        capacity = count;
+        capacity = N;
         size = 0;
         data = new T[capacity];
-        for (size_t i = 0; i < count; ++i)
+        for (size_t i = 0; i < N; ++i)
         {
             add(arr[i]);
         }
@@ -58,6 +74,11 @@ public:
 
     Set(size_t count, const T& min, const T& max): data(nullptr), size(0), capacity(0)
     {
+        if (min > max)
+        {
+            throw std::invalid_argument("min is greater than max");
+        }
+
         std::random_device r;
         std::default_random_engine generator(r());
 
@@ -78,6 +99,11 @@ public:
 
     Set(size_t count, size_t min, size_t max): data(nullptr), size(0), capacity(0)
     {
+        if (min > max)
+        {
+            throw std::invalid_argument("min is greater than max");
+        }
+
         std::random_device r;
         std::default_random_engine generator(r());
         std::uniform_int_distribution<size_t> lengthDistribution(min, max);
@@ -97,6 +123,10 @@ public:
 
     Set(size_t count, const std::pair<int,int>& value_int, const std::pair<double, double>& value_double): data(nullptr), size(0), capacity(0)
     {
+        if ((value_int.first > value_int.second) || (value_double.first > value_double.second))
+        {
+            throw std::invalid_argument("min is greater than max");
+        }
         std::random_device r;
         std::default_random_engine generator(r());
         std::uniform_int_distribution<int> intDistribution(value_int.first,value_int.second);
@@ -150,20 +180,6 @@ public:
         return false;
     }
 
-    void add(const T& value)
-    {
-        if (contains(value))
-        {
-            return;
-        }
-        if (size == capacity)
-        {   
-            size_t newCapacity = (capacity == 0) ? 2 : capacity * 2;
-            resize(newCapacity);
-        }
-        data[size] = value;
-        ++size;
-    }
 
     T& operator [](size_t index) {
         if (index >= size){
@@ -260,6 +276,18 @@ public:
         remove(value);
         return *this;
     }
+
+    Set intersection(const Set& other)
+    {
+        Set result;
+        for (size_t i = 0; i < size; ++i) {
+            if (other.contains(data[i]))
+            {
+                result.add(data[i]);
+            }
+        }
+        return result;
+    }
 };
 
 template <typename T>
@@ -286,30 +314,40 @@ std::ostream& operator<<(std::ostream& out, const Set<T>& set)
     return out;
 }
 
+template <typename T>
+Set<T> only(Set<T> first, Set<T> second) {
+    Set<T> common = first.intersection(second);
+    for (size_t i = 0; i < common.getSize(); ++i)
+    {
+        first -= common[i];
+        second -= common[i];
+    }
+    return first + second;
+}
+
 int main() {
     std::cout << "INT\n";
     Set<int> numbers;
     numbers = numbers + 10 + 20 + 30 + 20;
-    //numbers.add(10);
-    //numbers.add(20);
-    //numbers.add(30);
-    //numbers.add(20);
     std::cout << "Set: " << numbers << '\n';
 
     int values_int[] = { 1, 2, 3, 2, 4 };
-    Set<int> test_int(values_int, 5);
-    test_int.add(4);
-    test_int.add(5);
-    test_int.add(6);
+    Set<int> test_int(values_int);
+    test_int += 4;
+    test_int += 5;
+    test_int += 6;
     std::cout << "Other set: " << test_int << '\n';
+    test_int -= 4;
+    test_int = test_int - 5;
+    std::cout << "Other set after minus: " << test_int << '\n';
 
     Set<int> rand_numbers(5, 1, 100);
     std::cout << "Random int: " << rand_numbers << '\n';
 
     int arr1[] = { 1,2,3 };
-    Set<int> first(arr1, 3);
+    Set<int> first(arr1);
     int arr2[] = { 3,4,5 };
-    Set<int> second(arr2, 3);
+    Set<int> second(arr2);
     Set<int> plusSet = first + second;
     Set<int> minusSet = first - second;
     std::cout << "A: " << first << '\n';
@@ -317,32 +355,25 @@ int main() {
     std::cout << "A + B: " << plusSet << '\n';
     std::cout << "A - B: " << minusSet << '\n';
 
-    int arr_num[] = { 6 };
-    Set<int> num(arr_num, 1);
-    Set<int> result(num);
-    result = result + 7;
-    result += 8;
-    std::cout << result << '\n';
-    result = result - 6;
-    result = result - 5;
-    result -= 8;
-    result -= 5;
-    std::cout << result << '\n';
+    Set<int> result = first.intersection(second);
+    std::cout << "A intersects with B: " << result << '\n';
+
+    Set<int> res = only(first, second);
+    std::cout << "Task1, elements are only in 1 set" << res << '\n';
+
+
 
 
     std::cout << "\nFLOAT\n";
     Set<float> floats;
-    floats.add(10.5f);
-    floats.add(20.25f);
-    floats.add(30.75f);
-    floats.add(20.25f);
+    floats = floats + 10.5f + 20.25f + 20.25f;
     std::cout << "Set: " << floats << '\n';
 
     float values_float[] = { 1.5f, 2.5f, 3.5f, 2.5f, 4.5f };
-    Set<float> test_float(values_float, 5);
-    test_float.add(4.5f);
-    test_float.add(5.5f);
-    test_float.add(6.5f);
+    Set<float> test_float(values_float);
+    test_float+= 4.5f;
+    test_float+= 5.5f;
+    test_float+= 6.5f;
     std::cout << "Other set: " << test_float << '\n';
 
     Set<float> rand_floats(5, 1.0f, 50.0f);
@@ -353,16 +384,13 @@ int main() {
 
     std::cout << "\nSTRING\n";
     Set<std::string> words;
-    words.add("apple");
-    words.add("banana");
-    words.add("orange");
-    words.add("banana");
+    words = words + "apple" + "banana" + "banana";
     std::cout << "Set: " << words << '\n';
 
     std::string values_string[] = { "cat", "dog", "cat"};
-    Set<std::string> test_string(values_string, 3);
-    test_string.add("pig");
-    test_string.add("cow");
+    Set<std::string> test_string(values_string);
+    test_string += "pig";
+    test_string += "cow";
     std::cout << "Other set: " << test_string << '\n';
 
     Set<std::string> rand_words(5, 1, 6);
@@ -370,12 +398,10 @@ int main() {
 
 
 
+
     std::cout << "\nPAIR\n";
     Set<std::pair<int, double>> pairs;
-    pairs.add({ 1, 2.3 });
-    pairs.add({ 2, 4.5 });
-    pairs.add({ 3, 6.7 });
-    pairs.add({ 2, 4.5 });
+    pairs = pairs + std::pair<int, double>{1, 2.3} + std::pair<int, double>{2, 4.5} + std::pair<int, double>{1, 2.3};
     std::cout << "Set: " << pairs << '\n';
 
     std::pair<int,double> values_pairs[] =
@@ -385,7 +411,7 @@ int main() {
         {7, 1.8},
         {6, 7.6}
     };
-    Set<std::pair<int, double>> test_pairs(values_pairs, 4);
+    Set<std::pair<int, double>> test_pairs(values_pairs);
     std::cout << "Other set: " << test_pairs << '\n';
 
     Set<std::pair<int, double>> rand_pairs(5, std::pair<int, int>{1, 10}, std::pair<double, double>{1.0,10.0});
