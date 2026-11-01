@@ -37,11 +37,28 @@ private:
         capacity = newCapacity;
     }
 
+    bool equal(const T& first, const T& second)
+    {
+        double eps = 1e-6;
+        if constexpr (std::is_floating_point_v<T>)
+        {
+            return std::abs(first - second) < eps;
+        }
+        else if constexpr (std::is_same_v<T, std::pair<int, double>>)
+        {
+            return first.first == second.first && std::abs(first.second - second.second) < eps;
+        }
+        else
+        {
+            return first == second;
+        }
+    }
+
     void remove(const T& value)
     {
         for (size_t i = 0; i < size; ++i)
         {
-            if (data[i] == value)
+            if (equal(data[i], value))
             {
                 for (size_t j = i; j + 1 < size; ++j)
                 {
@@ -171,7 +188,7 @@ public:
 
         for (size_t i = 0; i < size; ++i)
         {
-            if (data[i] == value)
+            if (equal(data[i], value))
             {
                 return true;
             }
@@ -180,9 +197,31 @@ public:
         return false;
     }
 
+    bool operator==(const Set& other) const
+    {
+        if (size != other.size)
+        {
+            return false;
+        }
+        for (size_t i = 0; i < size; ++i)
+        {
+            if (!other.contains(data[i]))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
 
-    T& operator [](size_t index) {
-        if (index >= size){
+    bool operator!=(const Set& other) const
+    {
+        return !(*this == other);
+    }
+
+    T& operator [](size_t index) 
+    {
+        if (index >= size)
+        {
             throw std::out_of_range("Index out of range");
         }
         return data[index];
@@ -194,7 +233,6 @@ public:
         {
             throw std::out_of_range("Index out of range");
         }
-
         return data[index];
     }
 
@@ -417,8 +455,5 @@ int main() {
     Set<std::pair<int, double>> rand_pairs(5, std::pair<int, int>{1, 10}, std::pair<double, double>{1.0,10.0});
     std::cout << "Random pairs: " << rand_pairs << '\n';
 
-
-
     return 0;
-
 }
