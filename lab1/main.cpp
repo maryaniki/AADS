@@ -115,13 +115,13 @@ public:
         if (capacity > 0)
         {
             data = new T[capacity];
-
             for (size_t i = 0; i < size; ++i)
             {
                 data[i] = other.data[i];
             }
         }
     }
+
 
     ~Set()
     {
@@ -182,6 +182,35 @@ public:
         return data[index];
     }
 
+    Set& operator=(const Set& other)
+    {
+        if (this == &other)
+        {
+            return *this;
+        }
+
+        delete[] data;
+
+        size = other.size;
+        capacity = other.capacity;
+
+        if (capacity > 0)
+        {
+            data = new T[capacity];
+
+            for (size_t i = 0; i < size; ++i)
+            {
+                data[i] = other.data[i];
+            }
+        }
+        else
+        {
+            data = nullptr;
+        }
+
+        return *this;
+    }
+
 
     Set operator+(const Set& other) const
     {
@@ -206,7 +235,31 @@ public:
         return result;
     }
 
+    Set operator+(const T& value) const
+    {
+        Set result(*this);
+        result.add(value);
+        return result;
+    }
 
+    Set& operator+=(const T& value)
+    {
+        add(value);
+        return *this;
+    }
+
+    Set operator-(const T& value) const
+    {
+        Set result(*this);
+        result.remove(value);
+        return result;
+    }
+
+    Set& operator-=(const T& value)
+    {
+        remove(value);
+        return *this;
+    }
 };
 
 template <typename T>
@@ -236,10 +289,11 @@ std::ostream& operator<<(std::ostream& out, const Set<T>& set)
 int main() {
     std::cout << "INT\n";
     Set<int> numbers;
-    numbers.add(10);
-    numbers.add(20);
-    numbers.add(30);
-    numbers.add(20);
+    numbers = numbers + 10 + 20 + 30 + 20;
+    //numbers.add(10);
+    //numbers.add(20);
+    //numbers.add(30);
+    //numbers.add(20);
     std::cout << "Set: " << numbers << '\n';
 
     int values_int[] = { 1, 2, 3, 2, 4 };
@@ -263,6 +317,17 @@ int main() {
     std::cout << "A + B: " << plusSet << '\n';
     std::cout << "A - B: " << minusSet << '\n';
 
+    int arr_num[] = { 6 };
+    Set<int> num(arr_num, 1);
+    Set<int> result(num);
+    result = result + 7;
+    result += 8;
+    std::cout << result << '\n';
+    result = result - 6;
+    result = result - 5;
+    result -= 8;
+    result -= 5;
+    std::cout << result << '\n';
 
 
     std::cout << "\nFLOAT\n";
